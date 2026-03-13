@@ -9,7 +9,7 @@ const {
   verifyRefreshToken,
   hashToken,
   compareToken,
-} = require("../services/Tokenservice");
+} = require("../services/TokenService");
 const { verifyFirebaseToken } = require("../config/firebase");
 
 // ─── Helper ──────────────────────────────────────────────────────────────────

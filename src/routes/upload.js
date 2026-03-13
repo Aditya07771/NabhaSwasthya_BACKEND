@@ -5,7 +5,7 @@ const { protect } = require("../middleware/auth");
 const { asyncHandler } = require("../middleware/errorHandler");
 // const { uploadFile, getAuthParams } = require("../services/imagekitService");
 const Consultation = require("../models/Consultation");
-const { uploadFile, getAuthParams } = require("../services/Imagekitservice");
+const { uploadFile, getAuthParams } = require("../services/imagekitService");
 
 // Use memory storage — we forward the buffer to ImageKit
 const upload = multer({
