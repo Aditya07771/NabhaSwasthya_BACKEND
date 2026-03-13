@@ -21,6 +21,8 @@ const pharmacyRoutes = require("./routes/pharmacy");
 const uploadRoutes = require("./routes/upload");
 const syncRoutes = require("./routes/sync");
 const adminRoutes = require("./routes/admin");
+const callRoutes = require("./routes/calls");        // ← ADD THIS
+const patientDashboard = require("./routes/patientDashboard"); // ← ADD THIS
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 connectDB();
@@ -33,10 +35,31 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "*",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, curl)
+      if (!origin) return callback(null, true);
+
+      const allowed = [
+        "http://localhost:3000",
+        "http://localhost:5173",  // Vite default
+        "http://localhost:4173",  // Vite preview
+        process.env.FRONTEND_URL,
+      ].filter(Boolean);
+
+      if (allowed.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Handle preflight for all routes
+app.options("*", cors());
 app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -72,6 +95,7 @@ app.get("/health", (req, res) => {
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/patients", patientRoutes);
+app.use("/api/patient", patientDashboard);
 app.use("/api/consultations", consultationRoutes);
 
 // symptom-check lives at the router level in consultations.js but we also mount at root /api
@@ -80,6 +104,7 @@ app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/sync", syncRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/calls", callRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

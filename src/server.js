@@ -6,19 +6,25 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-// ✅ Import the fully configured app from app.js
 const app = require("./app");
 const http = require("http");
 const { Server } = require("socket.io");
+
+// ── DB + Services init ────────────────────────────────────────────────────────
+const connectDB = require("./config/db");
+const { initFirebase } = require("./config/firebase");
+const { getImageKit } = require("./config/imagekit");
 
 const server = http.createServer(app);
 
 // ── Socket.io ─────────────────────────────────────────────────────────────────
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] },
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
 });
 
-// Make io accessible in route handlers via req.app.get("io")
 app.set("io", io);
 
 io.on("connection", (socket) => {
@@ -38,7 +44,11 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  // DB is already connected inside app.js, so we just listen on the server
+  // ✅ Connect DB first, then init services, then listen
+  await connectDB();
+  initFirebase();
+  getImageKit();
+
   server.listen(PORT, () => {
     console.log(`\n🚀 NBH Health Backend running on port ${PORT}`);
     console.log(`Environment : ${process.env.NODE_ENV || "development"}`);
